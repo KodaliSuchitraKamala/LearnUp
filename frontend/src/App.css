@@ -1,6 +1,8 @@
+* {
+  color-scheme: light !important;
+}
 body {
-  background: #f8fafc;
-  color: black !important;
+  background: #f8fafc !important;
   margin: 0;
   font-family: sans-serif;
 }
