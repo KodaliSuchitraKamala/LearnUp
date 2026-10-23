@@ -1,19 +1,20 @@
 import { useNavigate } from "react-router-dom";
+import { courses } from "../data/courses";
 
 function StudentDashboard() {
     const navigate = useNavigate()
-
-    const cardStyle = {
-        background: "white",
-        border: "1.5px solid #e2e8f0",
-        padding: "22px",
-        borderRadius: "14px",
-        boxShadow: "0 2px 10px rgba(0, 0, 0, 0.04)"
-    }
+    
+    const myCourses = [
+        { name: "Java Full Stack", progress: 60, color: "#2563eb" },
+        { name: "React Basics", progress: 80, color: "#16a34a" },
+        { name: "Spring Boot", progress: 30, color: "#ea580c" }
+    ]
 
     return (
-        <div style={{minHeight: "100vh", background: "#f8fafc", padding: "24px"}}>
-            <div style={{maxWidth: "1000px", margin: "0 auto"}}>
+        <div style={{minHeight: "100vh", background: "#f8fafc", padding: "20px"}}>
+            <div style={{maxWidth: "1100px", margin: "0 auto"}}>
+
+                {/* Header */}
                 <div style={{display: "flex", justifyContent: "space-between", alignItems: "center", background: "white", padding: "16px 20px", borderRadius: "12px", border: "1px solid #e2e8f0"}}>
                     <div>
                         <h1 style={{fontSize: "32px", fontWeight: "800", color: "#0f172a", margin: 0}}>Student Dashboard</h1>
@@ -22,30 +23,22 @@ function StudentDashboard() {
                     <button onClick={() => navigate("/")} style={{padding: "8px 18px", background: "#0f172a", color: "white", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "700", fontSize: "13px"}}>Logout</button>
                 </div>
 
-                <div style={{display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px", marginTop: "24px"}}>
-                    <div style={cardStyle}>
-                        <h3 style={{fontWeight: "700", color: "#0f172a", margin: "0 0 8px 0"}}>Java Full Stack</h3>
-                        <p style={{margin: "0 0 10px 0", color: "#475569", fontSize: "14px"}}>Progress: 60%</p>
-                        <div style={{background: "#e2e8f0", height: "8px", borderRadius: "10px"}}>
-                            <div style={{background: "#2563eb", width: "60%", height: "8px", borderRadius: "10px"}}></div>
-                        </div>
-                    </div>
+                {/* NEW BUTTON */}
+                <div style={{margin: "20px 0", textAlign: "left"}}>
+                    <button onClick={() => navigate("/courses")} style={{background: "#2563eb", color: "white", padding: "12px 24px", borderRadius: "10px", border: "none", fontWeight: "800", cursor: "pointer", fontSize: "14px", boxShadow: "0 4px 10px rgba(37, 99, 235, 0.3)"}}>🔍 Explore All Courses</button>
+                </div>
 
-                    <div style={cardStyle}>
-                        <h3 style={{fontWeight: "700", color: "#0f172a", margin: "0 0 8px 0"}}>React Basics</h3>
-                        <p style={{margin: "0 0 10px 0", color: "#475569", fontSize: "14px"}}>Progress: 80%</p>
-                        <div style={{background: "#e2e8f0", height: "8px", borderRadius: "10px"}}>
-                            <div style={{background: "#16a34a", width: "80%", height: "8px", borderRadius: "10px"}}></div>
+                {/* Progress Cards */}
+                <div style={{display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "16px"}}>
+                    {myCourses.map((course, i) => (
+                        <div key={i} style={{background: "white", padding: "20px", borderRadius: "12px", border: "1px solid #e2e8f0"}}>
+                            <h3 style={{fontSize: "16px", fontWeight: "700", margin: "0 0 8px 0"}}>{course.name}</h3>
+                            <p style={{fontSize: "13px", color: "#64748b", margin: "0 0 12px 0"}}>Progress: {course.progress}%</p>
+                            <div style={{width: "100%", height: "8px", background: "#f1f5f9", borderRadius: "20px", overflow: "hidden"}}>
+                                <div style={{width: `${course.progress}%`, height: "100%", background: course.color, borderRadius: "20px"}}></div>
+                            </div>
                         </div>
-                    </div>
-
-                    <div style={cardStyle}>
-                        <h3 style={{fontWeight: "700", color: "#0f172a", margin: "0 0 8px 0"}}>Spring Boot</h3>
-                        <p style={{margin: "0 0 10px 0", color: "#475569", fontSize: "14px"}}>Progress: 30%</p>
-                        <div style={{background: "#e2e8f0", height: "8px", borderRadius: "10px"}}>
-                            <div style={{background: "#f59e0b", width: "30%", height: "8px", borderRadius: "10px"}}></div>
-                        </div>
-                    </div>
+                    ))}
                 </div>
             </div>
         </div>

@@ -18,28 +18,32 @@ function InstructorDashboard() {
                 </div>
 
                 {/* TABLE - LIGHT THEME */}
-                <div style={{background: "white", border: "1px solid #e2e8f0", borderRadius: "12px", overflow: "hidden", boxShadow: "0 2px 10px rgba(0, 0, 0, 0.04)"}}>
-                    <div style={{display: "grid", gridTemplateColumns: "2fr 1fr 1fr", background: "#f8fafc", padding: "14px 20px", fontWeight: "700", color: "#475569", borderBottom: "1px solid #e2e8f0", fontSize: "14px"}}>
-                        <div>Course Name</div>
-                        <div style={{textAlign: "center"}}>Students</div>
-                        <div style={{textAlign: "center"}}>Status</div>
-                    </div>
-
-                    <div style={{display: "grid", gridTemplateColums: "2fr 1fr 1fr", padding: "16px 20px", borderBottom: "1px solid #f1f5f9", color: "#0f172a"}}>
-                        <div style={{fontWeight: "600"}}>Java Full Stack</div>
-                        <div style={{textAlign: "center"}}>45</div>
-                        <div style={{textAlign: "center"}}>
-                            <span style={{background: "#dcfce7", color: "#166534", padding: "4px 10px", borderRadius: "20px", fontSize: "700"}}>Published</span>
-                        </div>
-                    </div>
-
-                    <div style={{display: "grid", gridTemplateColums: "2fr 1fr 1fr", padding: "16px 20px", color: "#0f172a"}}>
-                        <div style={{fontWeight: "600"}}>React Mastery</div>
-                        <div style={{textAlign: "center"}}>30</div>
-                        <div style={{textAlign: "center"}}>
-                            <span style={{background: "#fef9c3", color: "#854d0e", padding: "4px 10px", borderRadius: "20px", fontSize: "700"}}>Draft</span>
-                        </div>
-                    </div>
+                <div style={{background: "white", border: "1px solid #e2e8f0", borderRadius: "12px", overflow: "hidden"}}>
+                    <table style={{width: "100%", borderCollapse: "collapse"}}>
+                        <thead>
+                            <tr style={{background: "#f8fafc", textAlign: "left", borderBottom: "1px solid #e2e8f0"}}>
+                                <th style={{padding: "14px 20px", color: "#475569", fontSize: "14px", width: "60%"}}>Course Name</th>
+                                <th style={{padding: "14px 20px", color: "#475569", fontSize: "14px", textAlign: "center", width: "20%"}}>Students</th>
+                                <th style={{padding: "14px 20px", color: "#475569", fontSize: "14px", textAlign: "center", width: "20%"}}>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style={{borderBottom: "1px solid #f1f5f9"}}>
+                                <td style={{padding: "16px 20px", fontWeight: "600", color: "#0f172a", textAlign: "left"}}>Java Full Stack</td>
+                                <td style={{padding: "16px 20px", textAlign: "center", color: "#0f172a"}}>45</td>
+                                <td style={{padding: "16px 20px", textAlign: "center"}}>
+                                    <span style={{background: "#dcfce7", color: "#166534", padding: "5px 12px", borderRadius: "20px", fontSize: "12px", fontWeight: "700"}}>Published</span>
+                                </td>
+                            </tr>
+                            <tr style={{borderBottom: "1px solid #f1f5f9"}}>
+                                <td style={{padding: "16px 20px", fontWeight: "600", color: "#0f172a", textAlign: "left"}}>React Mastery</td>
+                                <td style={{padding: "16px 20px", textAlign: "center", color: "#0f172a"}}>30</td>
+                                <td style={{padding: "16px 20px", textAlign: "center"}}>
+                                    <span style={{background: "#fef9c3", color: "#854d0e", padding: "5px 12px", borderRadius: "20px", fontSize: "12px", fontWeight: "700"}}>Draft</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
