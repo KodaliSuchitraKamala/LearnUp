@@ -1,14 +1,25 @@
 import { useNavigate } from "react-router-dom";
 import { courses } from "../data/courses";
+import { useEffect, useState } from "react";
 
 function StudentDashboard() {
     const navigate = useNavigate()
     
-    const myCourses = [
-        { name: "Java Full Stack", progress: 60, color: "#2563eb" },
-        { name: "React Basics", progress: 80, color: "#16a34a" },
-        { name: "Spring Boot", progress: 30, color: "#ea580c" }
-    ]
+    const [myCourses, setMyCourses] = useState([])
+
+    useEffect(() => {
+        const enrolled = JSON.parse(localStorage.getItem("enrolledCourses") || "[]")
+        // if no enrolled, show dummy 3 for now
+        if(enrolled.length === 0) {
+            setMyCourses([
+                { title: "Java Full Stack", progress: 60, color: "#2563eb" },
+                { title: "React Basics", progress: 80, color: "#16a34a" },
+                { title: "Spring Boot", progress: 30, color: "#ea580c" }
+            ])
+        } else {
+            setMyCourses(enrolled.map(c => ({...c, name: c.title, color: "#2563eb"})))
+        }
+    }, [])
 
     return (
         <div style={{minHeight: "100vh", background: "#f8fafc", padding: "20px"}}>
@@ -32,7 +43,7 @@ function StudentDashboard() {
                 <div style={{display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "16px"}}>
                     {myCourses.map((course, i) => (
                         <div key={i} style={{background: "white", padding: "20px", borderRadius: "12px", border: "1px solid #e2e8f0"}}>
-                            <h3 style={{fontSize: "16px", fontWeight: "700", margin: "0 0 8px 0"}}>{course.name}</h3>
+                            <h3 style={{fontSize: "16px", fontWeight: "700", margin: "0 0 8px 0", color: "#0f172a"}}>{course.name}</h3>
                             <p style={{fontSize: "13px", color: "#64748b", margin: "0 0 12px 0"}}>Progress: {course.progress}%</p>
                             <div style={{width: "100%", height: "8px", background: "#f1f5f9", borderRadius: "20px", overflow: "hidden"}}>
                                 <div style={{width: `${course.progress}%`, height: "100%", background: course.color, borderRadius: "20px"}}></div>

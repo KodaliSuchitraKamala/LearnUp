@@ -21,7 +21,7 @@ function CourseList() {
 
                 {/* Header */}
                 <div style={{display: "flex", justifyContent: "space-between", alignItems: "center", background: "white", padding: "16px 20px", borderRadius: "12px", border: "1px solid #e2e8f0", marginBottom: "20px"}}>
-                    <h1 style={{fontSize: "20px", fontWeight: "800", margin: 0, color: "#0f172a"}}>Explore Courses</h1>
+                    <h1 style={{fontSize: "32px", fontWeight: "800", margin: 0, color: "#0f172a"}}>Explore Courses</h1>
                     <button onClick={() => navigate("/student")} style={{padding: "8px 14px", background: "#0f172a", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "700", fontSize: "13px"}}>Back to Dashboard</button>
                 </div>
                 
@@ -38,7 +38,7 @@ function CourseList() {
                 {/* Cards Grid */}
                 <div style={{display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "16px"}}>
                     {filtered.map((course) => (
-                        <div key={course.id} style={{background: "white", borderRadius: "14px", border: "1px solid #e2e8f0", overflow: "hidden"}}>
+                        <div key={course.id} onClick={() => navigate(`/courses/${course.id}`)} style={{background: "white", borderRadius: "14px", border: "1px solid #e2e8f0", overflow: "hidden", cursor: "pointer"}}>
                             <img src={course.image} alt={course.title} style={{width: "100%", height: "160px", objectFit: "cover"}} />
                             <div style={{padding: "14px"}}>
                                 <div style={{display: "flex", justifyContent: "space-between", marginBottom: "8px"}}>
