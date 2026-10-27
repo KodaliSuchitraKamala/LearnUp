@@ -1,49 +1,59 @@
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 
 function InstructorDashboard() {
-    const navigate = useNavigate()
+    const [newCourse, setNewCourse] = useState({title: "", category: "Select", price: "₹0"})
+
+    const handleAddCourse = () => {
+        if (!newCourse.title.trim()) return alert("Enter title")
+
+        // SAFE - handles null, "null" string, everything
+        let custom = []
+        try {
+            const stored = localStorage.getItem("customCourses")
+            custom = stored ? JSON.parse(stored) : []
+            if (!Array.isArray(custom)) custom = []
+        } catch(e) {
+            custom = []
+        }
+
+        custom.push({
+            id: Date.now(),
+            title: newCourse.title,
+            category: newCourse.category,
+            price: newCourse.price,
+            instructor: "You (Instructor)",
+            rating: 5.0,
+            students: 0,
+            image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400",
+            level: "Beginner",
+            description: "New course added by instructor",
+            whatYouLearn: ["Basics", "Advanced", "Project"],
+            duration: "20 Hours"
+        })
+
+        localStorage.setItem("customCourses", JSON.stringify(custom))
+        alert("✅ Courses Added! Go to /courses to see it")
+        setNewCourse({title: "", category: "Select", price: "₹0"})
+    }
 
     return (
-        <div style={{minHeight: "100vh", background: "#f8fafc", padding: "24px"}}>
+        <div style={{minHeight: "100vh", background: "#f8fafc", padding: "20px"}}>
             <div style={{maxWidth: "1000px", margin: "0 auto"}}>
-                {/* HEADER */}
-                <div style={{display: "flex", justifyContent: "space-between", alignItems: "center", background: "white", padding: "16px 20px", borderRadius: "12px", border: "1px solid #e2e8f0"}}>
-                    <h1 style={{fontSize: "32px", fontWeight: "800", color: "#0f172a", margin: 0}}>Instructor Dashboard</h1>
-                    <button onClick={() => navigate("/")} style={{padding: "8px 18px", background: "#0f172a", color: "white", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "700", fontSize: "13px"}}>Logout</button>
-                </div>
-
-                {/* CREATE BUTTON */}
-                <div style={{textAlign: "center", margin: "24px 0"}}>
-                    <button style={{background: "#2563eb", color: "white", padding: "12px 20px", borderRadius: "10px", border: "none", fontWeight: "700", cursor: "pointer", boxShadow: "0 4px 12px rgba(37, 99, 235, 0.3)"}}>+ Create New Course</button>
-                </div>
-
-                {/* TABLE - LIGHT THEME */}
-                <div style={{background: "white", border: "1px solid #e2e8f0", borderRadius: "12px", overflow: "hidden"}}>
-                    <table style={{width: "100%", borderCollapse: "collapse"}}>
-                        <thead>
-                            <tr style={{background: "#f8fafc", textAlign: "left", borderBottom: "1px solid #e2e8f0"}}>
-                                <th style={{padding: "14px 20px", color: "#475569", fontSize: "14px", width: "60%"}}>Course Name</th>
-                                <th style={{padding: "14px 20px", color: "#475569", fontSize: "14px", textAlign: "center", width: "20%"}}>Students</th>
-                                <th style={{padding: "14px 20px", color: "#475569", fontSize: "14px", textAlign: "center", width: "20%"}}>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr style={{borderBottom: "1px solid #f1f5f9"}}>
-                                <td style={{padding: "16px 20px", fontWeight: "600", color: "#0f172a", textAlign: "left"}}>Java Full Stack</td>
-                                <td style={{padding: "16px 20px", textAlign: "center", color: "#0f172a"}}>45</td>
-                                <td style={{padding: "16px 20px", textAlign: "center"}}>
-                                    <span style={{background: "#dcfce7", color: "#166534", padding: "5px 12px", borderRadius: "20px", fontSize: "12px", fontWeight: "700"}}>Published</span>
-                                </td>
-                            </tr>
-                            <tr style={{borderBottom: "1px solid #f1f5f9"}}>
-                                <td style={{padding: "16px 20px", fontWeight: "600", color: "#0f172a", textAlign: "left"}}>React Mastery</td>
-                                <td style={{padding: "16px 20px", textAlign: "center", color: "#0f172a"}}>30</td>
-                                <td style={{padding: "16px 20px", textAlign: "center"}}>
-                                    <span style={{background: "#fef9c3", color: "#854d0e", padding: "5px 12px", borderRadius: "20px", fontSize: "12px", fontWeight: "700"}}>Draft</span>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <h1 style={{fontSize: "34px", fontWeight: "800", color: "#0f172a"}}>Instructor Dashboard</h1>
+                <div style={{background: "white", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "20px", marginTop: "20px"}}>
+                    <h3 style={{color: "#0f172a"}}>Add New Course</h3>
+                    <div style={{display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px", marginTop: "12px"}}>
+                        <input value={newCourse.title} onChange={e => setNewCourse({...newCourse, title: e.target.value})} placeholder="Course Title" style={{padding: "10px", borderRadius: "8px", border: "1px solid #e2e8f0"}} />
+                        <select value={newCourse.category} onChange={e => setNewCourse({...newCourse, category: e.target.value})} style={{padding: "10px", borderRadius: "8px", border: "1px solid #e2e8f0"}}>
+                            <option>Select</option>
+                            <option>Java</option>
+                            <option>Frontend</option>
+                            <option>Python</option>
+                            <option>Full Stack</option>
+                        </select>
+                        <input value={newCourse.price} onChange={e => setNewCourse({...newCourse, price: e.target.value})} placeholder="Price ₹0" style={{padding: "10px", borderRadius: "8px", border: "1px solid #e2e8f0"}} />
+                    </div>
+                    <button onClick={handleAddCourse} style={{marginTop: "12px", background: "#2563eb", color: "white", padding: "10px 20px", borderRadius: "8px", border: "none", fontWeight: "700", cursor: "pointer"}}>Add Course</button>
                 </div>
             </div>
         </div>
