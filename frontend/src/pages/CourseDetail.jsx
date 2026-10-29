@@ -1,96 +1,158 @@
-import { useParams, useNavigate } from "react-router-dom";
-import { courses } from "../data/courses";
+import { useParams, Link } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { courses } from "../data/courses";
 
-function CourseDetail() {
-    const { id } = useParams()
-    const navigate = useNavigate()
-    const course = courses.find(c => c.id === parseInt(id))
-    const lessons = ["Introduction & Setup", "Core Concepts", "Hands-On Project", "Advanced Topics", "Final Project + Deploy"]
-    const [checkedLessons, setCheckedLessons] = useState([])
-    const [isEnrolled, setIsEnrolled] = useState(false)
+export default function CourseDetail() {
+    const { id } = useParams();
 
-    useEffect(() => {
-        const enrolled = JSON. parse(localStorage.getItem("enrolledCourses") || "[]")
-        if (enrolled.find(c => c.id === parseInt(id))) setIsEnrolled(true)
-        const saved = JSON.parse(localStorage.getItem(`progress-${id}`) || "[]")
-        setCheckedLessons(saved)
-    }, [id])
+    // Get all courses (default + custom added by instructor)
+    const customCourses = JSON.parse(localStorage.getItem("customCourses") || "[]");
+    const allCourses = [...courses, ...customCourses];
+    const course = allCourses.find(c => String(c.id) === String(id));
 
-    if (!course) return <p style={{padding: "20px"}}>Course not found</p>
+    // Progress state
+    const [completed, setCompleted] = useState(() => {
+        return JSON.parse(localStorage.getItem(`progress_${id}`) || "[]");
+    });
 
+    // Check if enrolled
+    const enrollerCourses = JSON.parse(localStorage.getItem("enrolledCourses") || "[]");
+    const isEnrolled = enrollerCourses.map(String).includes(String(id));
+
+    // Enroll Function
     const handleEnroll = () => {
-        const enrolled = JSON.parse(localStorage.getItem("enrolledCourse") || "[]")
-        if (!enrolled.find(c => c.id === course.id)) {
-            enrolled.push({...course, progress: 0, enrolledAt: new Date().toISOString() })
-            localStorage.setItem("enrolledCourses", JSON.stringify(enrolled))
+        const enrolled = JSON.parse(localStorage.getItem("enrolledCourses") || "[]");
+        const idStr = String(id);
+        // Avoid duplicate
+        if (!enrolled.map(String).includes(idStr)) {
+            enrolled.push(idStr);
+            localStorage.setItem("enrolledCourses", JSON.stringify(enrolled));
+            alert("✅ Enrolled Successfully! Check My Learning");
+            window.location.href = "/student";
+        } else {
+            window.location.href = "/student";
         }
-        setIsEnrolled(true)
-        navigate("/student")
+    };
+
+    // Toggle video checkbox
+    const toggleCheck = (index) => {
+        let newCompleted;
+        if (completed.includes(index)) {
+            newCompleted = completed.filter(i => i !== index);
+        } else {
+            newCompleted = [...completed, index];
+        }
+        setCompleted(newCompleted);
+        localStorage.setItem(`progress_${id}`, JSON.stringify(newCompleted));
+    };
+
+    if (!course) {
+        return (
+            <div className="container mt-5 text-center">
+                <h3 style={{color: "var(--text)"}}>Course not found</h3>
+                <Link to="/courses" className="btn btn-primary mt-3">Back to Courses</Link>
+            </div>
+        );
     }
-
-    const toggleLesson = (lesson) => {
-        let saved = [...checkedLessons]
-        if (saved.includes(lesson)) saved = saved.filter(l => l !== lesson)
-        else saved.push(lesson)
-        setCheckedLessons(saved)
-        localStorage.setItem(`progress-${id}`, JSON.stringify(saved))
-
-        // update enrolled progress
-        let enrolled = JSON.parse(localStorage.getItem("enrolledCourses") || "[]")
-        enrolled = enrolled.map(c => c.id === parseInt(id) ? { ...c, progress: Math.round((saved.length / lessons.length) * 100) } : c)
-        localStorage.setItem("enrolledCourses", JSON.stringify(enrolled))
-    }
-
-    const progressPercent = Math. round((checkedLessons.length / lessons.length) * 100)
+    
+    const totalVideos = course.videos?.length || 0;
+    const progressPercent = totalVideos > 0 ? Math.round((completed.length / totalVideos) * 100) : 0;
+    const isCompleted = progressPercent === 100;
 
     return (
-        <div style={{minHeight: "100vh", background: "#f8fafc", padding: "20px"}}>
-            <div style={{maxWidth: "1000px", margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 340px", gap: "20px"}}>
-                <div style={{background: "white", borderRadius: "14px", border: "1px solid #e2e8f0", padding: "24px"}}>
-                    <button onClick={() => navigate("/courses")} style={{marginBottom: "16px", padding: "6px 12px", borderRadius: "8px", border: "1px solid #e2e8f0", cursor: "pointer"}}>← Back to Courses</button>
-                    <h1 style={{fontSize: "26px", fontWeight: "800", margin: "0 0 8px 0", color: "#0f172a"}}>{course.title}</h1>
-                    <p style={{color: "#64748b", fontSize: "14px"}}>By {course.instructor} • {course.category} • {course.level}</p>
-                    <img src={course.image} alt=""style={{width: "100%", height: "280px", objectFit: "cover", borderRadius: "12px", margin: "16px 0"}} />
+        <div className="container mt-4 pb-5">
+            <Link to="/courses" className="btn btn-sm btn-outline-secondary mb-3">← Back to Courses</Link>
 
-                    <h3 style={{color: "#0f172a"}}>About this course</h3>
-                    <p style={{color: "#334155", lineHeight: "1.6"}}>{course.description}</p>
+            <div className="row">
+                {/* Left Side */}
+                <div className="col-md-8">
+                    <img src={courses.image} className="w-100 rounded-4 shadow-sm" style={{height: "320px", objectFit: "cover"}} alt={course.title} />
 
-                    <h3 style={{marginTop: "20px", color: "#0f172a"}}>What you'll learn</h3>
-                    <ul>{course.whatYouLearn.map((i, idx) => <li key={idx} style={{marginBottom: "6px", color: "#475569"}}>✅ {i}</li>)}</ul>
+                    <h2 className="mt-3 fw-bold" style={{color: "var(--text)"}}>{course.title}</h2>
+                    <p style={{color: "var(--muted)"}}>By {course.instructor || course.author} | {course.category}</p>
+                    <p style={{color: "var(--text)"}}>{course.description}</p>
 
-                    <h3 style={{marginTop: "24px", color: "#0f172a"}}>Course Content - {checkedLessons.length}/{lessons.length} completed ({progressPercent}%)</h3>
-                    <div style={{background: "#e2e8f0", height: "8px", borderRadius: "10px", marginBottom: "12px"}}>
-                        <div style={{width: `${progressPercent}%`, background: "#2563eb", height: "8px", borderRadius: "10px", transition: "0.3s"}}></div>
-                    </div>
-                    {lessons.map(l => (
-                        <div key={l} style={{display: "flex", gap: "10px", padding: "10px", border: "1px solid #e2e8f0", marginBottom: "8px", borderRadius: "10px"}}>
-                            <input type="checkbox" checked={checkedLessons.includes(l)} onChange={() => toggleLesson(l)} />
-                            <span style={{fontSize: "14px"}}>{l}</span>
+                    <div className="card p-3 mt-4">
+                        <h5 style={{color: "var(--text)"}}>Course Content - {completed.length}/{totalVideos} completed</h5>
+
+                        <div className="d-flex justify-content-between mb-2">
+                            <small style={{color: "var(--muted)"}}>{progressPercent}% Completed</small>
+                            <small style={{color: "var(--muted)"}}>{completed.length}/{totalVideos}</small>
                         </div>
-                    ))}
 
-                    {progressPercent === 100 && (
-                        <div style={{background: "#dcfce7", border: "1px solid #16a34a", padding: "18px", borderRadius: "12px", marginTop: "20px", textAlign: "center"}}>
-                            <h2 style={{margin: 0}}>🎉 Certificate Unlocked!</h2>
-                            <p>You completed {course.title}</p>
-                            <button onClick={() => window.print()} style={{background: "#16a34a", color: "white", padding: "10px 20px", borderRadius: "8px", border: "none", fontWeight: "700", cursor: "pointer"}}>Download Certificate</button>
+                        <div className="progress mb-3" style={{height: "20px"}}>
+                            <div className="progress-bar progress-bar-striped progress-bar-animated bg-success" style={{width: `${progressPercent}%`}}>
+                                {progressPercent}%
+                            </div>
+                        </div>
+
+                        <ul className="list-group">
+                            {course.videos?.map((videoTitle, index) => (
+                                <li key={index} className="list-group-item d-flex justify-content-between align-items-center" style={{background: "var(--card-bg)", color: "var(--text)", borderColor: "var(--border)"}}>
+                                    <span>
+                                        <input type="checkbox" checked={completed.includes(index)} onChange={() => toggleCheack(index)} disabled={!isEnrolled} className="form-check-input me-2" />
+                                        {index + 1}. {videoTitle}
+                                    </span>
+                                    {completed.includes(index) && <span className="badge bg-success">✓ Done</span>}
+                                </li>
+                            ))}
+                        </ul>
+
+                        {!isEnrolled && (
+                            <div className="alert alert-warning mt-3">
+                                ⚠️ Enroll first to track progress
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Certificate - Show when 100% */}
+                    {isCompleted && (
+                        <div className="card mt-4 p-4 border-success bg-success bg-opacity-10">
+                            <div className="text-center">
+                                <h3 className="text-success">🎉 Congratulations!</h3>
+                                <h5 style={{color: "var(--text)"}}>You completed {course.title}</h5>
+                                <p style={{color: "var(--muted)"}}>You are eligible for certificate</p>
+                                <div className="p-4 border border-2 border-dashed rounded-3 mt-3" style={{background: "var(--card-bg)"}}>
+                                    <h4>CERTIFICATE OF COMPLETION</h4>
+                                    <p>This is to certify that</p>
+                                    <h5 className="fw-bold text-primary">{course.title}</h5>
+                                    <small style={{color: "var(--muted)"}}>Date: {new Date().toLocaleDateString()}</small>
+                                </div>
+                                <button onClick={() => window.print()} className="btn btn-success mt-3">📜 Download Certificate</button>
+                            </div>
                         </div>
                     )}
                 </div>
 
-                <div style={{background: "white", borderRadius: "14px", border: "1px solid #e2e8f0", padding: "20px", height: "fit-content", position: "sticky", top: "20px"}}>
-                    <h2 style={{fontSize: "28px", fontWeight: "800", margin: 0, color: "#0f172a"}}>{course.price}</h2>
-                    <p style={{color: "#64748b", fontSize: "13px"}}>⭐ {course.rating} ({course.students} students) • {course.duration}</p>
-                    {isEnrolled ? (
-                        <button onClick={() => navigate("/student")} style={{width: "100%", marginTop: "16px", background: "#16a34a", color: "white", padding: "12px", borderRadius: "10px", border: "none", fontWeight: "800", cursor: "pointer"}}>Go to My Learning →</button>
-                    ) : (
-                        <button onClick={handleEnroll} style={{width: "100%", marginTop: "16px", background: "#2563eb", color: "white", padding: "12px", borderRadius: "10px", border: "none", fontWeight: "800", cursor: "pointer"}}>Enroll Now</button>
-                    )}
+                {/* Right Side - Price Card */}
+                <div className="col-md-4">
+                    <div className="card p-4 shadow-sm sticky-top" style={{top: "90px"}}>
+                        <h2 className="fw-bold" style={{color: "var(--text)"}}>{course.price}</h2>
+                        <p style={{color: "var(--muted)"}}><s>₹2999</s> 50% off</p>
+
+                        {isEnrolled ? (
+                            <>
+                                <Link to="/student" className="btn btn-success w-100 fw-bold">✅ Go to My Learning</Link>
+                                <p className="text-success small text-center mt-2">You are enrolled in this course</p>
+                            </>
+                        ) : (
+                            <>
+                                <button onClick={handleEnroll} className="btn btn-primary w-100 fw-bold">Enroll Now</button>
+                                <p className="small text-center mt-2" style={{color: "var(--muted)"}}>30-Day Money Back Guarantee</p>
+                            </>
+                        )}
+
+                        <hr style={{borderColor: "var(--border)"}} />
+                        <h6 style={{color: "var(--text)"}}>This course includes:</h6>
+                        <ul className="small" style={{color: "var(--muted)"}}>
+                            <li>📹 {totalVideos} on-demand videos</li>
+                            <li>📄 Articles & Resources</li>
+                            <li>🏆 Certificate of Completion</li>
+                            <li>♾️ Lifetime Access</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
-    )
+    );
 }
-
-export default CourseDetail
