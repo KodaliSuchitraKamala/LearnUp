@@ -1,47 +1,40 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
-function Login() {
-    const [role, setRole] = useState("STUDENT")
-    const navigate = useNavigate()
+export default function Login() {
+    const [form, setForm] = useState({ email: "", password: "" });
+    const navigate = useNavigate();
 
-    const handleLogin = () => {
-        localStorage.setItem("role", role)
-        if(role === "STUDENT") navigate("/student")
-        else navigate("/instructor")
-    }
+    const handleLogin = (e) => {
+        e.preventDefault();
+        const allUsers = JSON.parse(localStorage.getItem("allUsers") || "[]");
+        const foundUser = allUsers.find(u => u.email === form.email && u.password === form.password);
 
-    const inputStyle = {
-        width: "100%",
-        boxSizing: "border-box",
-        background: "#f1f5f9",
-        color: "black",
-        border: "1.5px solid #cdb5e1",
-        padding: "12px 14px",
-        marginBottom: "14px",
-        borderRadius: "10px",
-        fontSize: "14px",
-        outline: "none"
-    }
+        if (foundUser) {
+            // Save full user object - so Navbar shows name + role
+            localStorage.setItem("user", JSON.stringify(foundUser));
+            localStorage.setItem("userRole", foundUser.role);
+            localStorage.setItem("isLoggedIn", "true");
+            alert(`Welcome back ${foundUser.name} (${foundUser.role})`);
+            if (foundUser.role === "instructor") navigate("/instructor");
+            else navigate("/courses");
+        } else {
+            alert("User not found! Please register first.");
+            navigate("/register");
+        }
+    };
 
     return (
-        <div style={{minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f8fafc"}}>
-            <div style={{width: "380px", padding: "32px", background: "white", boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)", borderRadius: "16px", boxSizing: "border-box"}}>
-                <h1 style={{fontSize: "28px", fontWeight: "800", color: "#0f172a", margin: "0 0 6px 0", textAlign: "center"}}>LearnUp LMS</h1>
-                <p style={{textAlign: "center", color: "#64748b", marginBottom: "20px", fontSize: "14px"}}>Login to continue</p>
-
-                <div style={{display: "flex", gap: "8px", marginBottom: "20px", background: "#f1f5f9", padding: "4px", borderRadius: "8px"}}>
-                    <button onClick={() => setRole("STUDENT")} style={{flex: 1, background: role === "STUDENT" ? "#2563eb" : "transparent", color: role === "STUDENT" ? "#fff" : "#000", padding: "8px", borderRadius: "6px", border: "none", fontWeight: "600", cursor: "pointer"}}>Student</button>
-                    <button onClick={() => setRole("INSTRUCTOR")} style={{flex: 1, background: role === "INSTRUCTOR" ? "#2563eb" : "transparent", color: role === "INSTRUCTOR" ? "#fff" : "#000", padding: "8px", borderRadius: "6px", border: "none", fontWeight: "600", cursor: "pointer"}}>Instructor</button>
-                </div>
-
-                <input placeholder="Email" style={inputStyle} />
-                <input placeholder="Password" type="password" style={inputStyle} />
-
-                <button onClick={handleLogin} style={{width: "100%", boxSizing: "border-box", background: "#0f172a", color: "white", padding: "13px", borderRadius: "10px", border: "none", cursor: "pointer", fontWeight: "700", fontSize: "14px"}}>Login as {role}</button>
+        <div className="container mt-5" style={{maxWidth: "400px"}}>
+            <div className="card p-4" style={{background: "var(--card-bg)"}}>
+                <h3 className="text-center" style={{color: "var(--text)"}}>Login</h3>
+                <form onSubmit={handleLogin} className="mt-3">
+                    <input className="form-control mb-3" placeholder="Email" required value={form.email} onChange={e => setForm({...form, email: e.target.value})} />
+                    <input className="form-control mb-3" placeholder="Password" type="password" required value={form.password} onChange={e => setForm({...form, password: e.target.value})} />
+                    <button className="btn btn-primary w-100">Login</button>
+                </form>
+                <p className="text-center mt-3">New user? <Link to="/register">Register</Link></p>
             </div>
         </div>
-    )
+    );
 }
-
-export default Login
