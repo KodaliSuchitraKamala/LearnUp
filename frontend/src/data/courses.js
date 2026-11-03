@@ -11,7 +11,8 @@ export const courses = [
         level: "Beginner",
         description: "Master Java from basics to advanced. Build real-time projects with Spring Boot, Hibernate, and React. Perfect for College students.",
         whatYouLearn: ["Core Java & OOPs", "Spring Boot & MVC", "MySQL & Hibernate", "Build 3 Real Projects"],
-        duration: "40 Hours"
+        duration: "40 Hours",
+        videos: ["Java Basics & JDK Setup", "OOPs Concepts", "Collections & Exception", "Spring Boot Intro", "Final Project - E-commerce"]
     },
     {
         id: 2,
@@ -25,7 +26,8 @@ export const courses = [
         level: "Intermediate",
         description: "Learn React 18 with Hooks, Redux, and build real-world projects. From zero to deployment.",
         whatYouLearn: ["React Hooks", "React Router", "State Management", "Deploy to Vercel"],
-        duration: "25 Hours"
+        duration: "25 Hours",
+        videos: ["Intro to React", "Components & Props", "State & Hooks", "Routing", "Final Project"]
     },
     {
         id: 3,
@@ -39,7 +41,8 @@ export const courses = [
         level: "Beginner",
         description: "Python + Pandas + ML. Start your GenAI journey.",
         whatYouLearn: ["Python Basics", "Pandas & Numpy", "Data Visualization", "Intro to ML"],
-        duration: "30 Hours"
+        duration: "30 Hours",
+        videos: ["Python Basics", "Data Types & Loops", "Pandas", "Visualization", "Mini ML Project"]
     },
     {
         id: 4,
@@ -53,6 +56,7 @@ export const courses = [
         level: "Advanced",
         description: "Build the real-time platforms end-to-end. MERN + Auth + Deployment.",
         whatYouLearn: ["MongoDB", "Express & Node", "React Advanced", "JWT Auth"],
-        duration: "50 Hours"
+        duration: "50 Hours",
+        videos: ["MERN Intro", "MongoDB + Express", "React Frontend", "Auth & JWT", "Deployment"]
     }    
 ]
