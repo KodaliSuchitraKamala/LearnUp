@@ -1,5 +1,5 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { courses as staticCourses } from "../data/courses";
 
 export default function CourseDetail() {
@@ -69,10 +69,12 @@ export default function CourseDetail() {
         ctx.strokeStyle = "#c9a86a";
         ctx.lineWidth = 12;
         ctx.strokeRect(20, 20, 1360, 860);
+
         // Inner Blue Border
         ctx.strokeStyle = "#1e40af";
         ctx.lineWidth = 6;
         ctx.strokeRect(40, 40, 1320, 820);
+
         // Inner Gold Thin
         ctx.strokeStyle = "#c9a86a";
         ctx.lineWidth = 2;
@@ -100,8 +102,8 @@ export default function CourseDetail() {
 
         // Student Name GOld Cursive
         ctx.fillStyle = "#92400e";
-        ctx.font = "italic bold 62px 'Brush Script MT', cursive";
-        ctx.fillText(user.name || "Student", 700, 400);
+        ctx.font = "italic bold 52px 'Brush Script MT', cursive";
+        ctx.fillText(user.name || localStorage.getItem("userName") || "Student", 700, 400);
 
         // Line under name
         ctx.strokeStyle = "#c9a86a";
@@ -129,6 +131,8 @@ export default function CourseDetail() {
         ctx.fillStyle = "#78350f";
         ctx.font = "bold 14px sans-serif";
         ctx.fillText("VERIFIED", 700, 710);
+        ctx.font = "bold 12px sans-serif";
+        ctx.fillText("LEARNUP", 700, 730);
 
         // Signatures
         ctx.strokeStyle = "#c9a86a";
@@ -144,15 +148,24 @@ export default function CourseDetail() {
 
         ctx.fillStyle = "#1e3a8a";
         ctx.font = "18px serif";
+        ctx.textAlign = "center";
         ctx.fillText("INSTRUCTOR", 330, 775);
+        ctx.font = "16px serif";
         ctx.fillText(course.instructor, 330, 800);
-        ctx.fillText("LEARNUP", 1070, 775);
 
+        ctx.font = "bold 18px serif";
+        ctx.fillText("LEARNUP", 1070, 775);
+        ctx.font = "14px serif";
+        ctx.fillText("Director / Authorized", 1070, 800);
+
+        // Footer
         ctx.font = "16px sans-serif";
         ctx.textAlign = "left";
         ctx.fillText(`Date: ${new Date().toLocaleDateString()}`, 80, 858);
         ctx.textAlign = "center";
         ctx.fillText(`Certificate ID: LULMS-${course.id}-${Date.now().toString().slice(-6)}`, 700, 858);
+        ctx.textAlign = "right";
+        ctx.fillText("verifiable at learnup.com/verify", 1320, 858);
 
         // Download
         const dataUrl = canvas.toDataURL("image/png");
@@ -183,29 +196,37 @@ export default function CourseDetail() {
                                     <input type="checkbox" checked={completed.includes(idx)} onChange={() => toggleVideo(idx)} className="me-2" />
                                     {idx + 1}. {v}
                                 </div>
-                                <small>10 min</small>
+                                <small className="text-muted">10 min</small>
                             </div>
                         ))}
                     </div>
 
                     {percent === 100 && (
-                        <div className="card mt-4 p-4 text-center border-warning border-3">
+                        <div className="card mt-4 p-4 text-center border-warning border-3 shadow" style={{background: "linear-gradient(135deg, #fffbe6, #eef4ff)"}}>
                             <h1>🏆</h1>
-                            <h3>Congratulations {user.name}!</h3>
+                            <h3 className="fw-bold">Congratulations {user.name}!</h3>
                             <p>You completed <b>{course.title}</b></p>
-                            <button onClick={downloadCertificate} className="btn btn-warning fw-bold mt-3">📥 Download Certificate</button>
+                            <div className="mt-2 d-flex justify-content-center gap-3 flex-wrap">
+                                <button onClick={downloadCertificate} className="btn btn-warning fw-bold px-4 py-2">📥 Download Certificate</button>
+                                <Link to={`/player/${course.id}`} className="btn btn-outline-primary px-4 py-2">▶️ Rewatch</Link>
+                            </div>
                         </div>
                     )}
                 </div>
                 <div className="col-md-4">
-                    <div className="card p-4">
+                    <div className="card p-4 shadow-sm">
                         <h3>{course.price}</h3>
-                        {!isEnrolled ? <button onClick={handleEnroll} className="btn btn-primary w-100 fw-bold">Enroll Now</button> : <button onClick={() => navigate("/student")} className="btn btn-success w-100 fw-bold">✅ Go to My Learning</button>}
+                        {!isEnrolled ? (
+                            <button onClick={handleEnroll} className="btn btn-primary w-100 fw-bold">Enroll Now</button>
+                        ) : (
+                            <button onClick={() => navigate("/student")} className="btn btn-success w-100 fw-bold">✅ Go to My Learning</button>
+                        )}
                         <hr />
                         <ul className="small">
                             <li>📹 {videos.length} videos</li>
                             <li>🏆 Certificate</li>
                             <li>♾️ Lifetime Access</li>
+                            <li>▶️ Full HD Videos</li>
                         </ul>
                     </div>
                 </div>

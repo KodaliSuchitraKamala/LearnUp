@@ -4,6 +4,7 @@ import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
 import CourseList from "./pages/CourseList";
 import CourseDetail from "./pages/CourseDetail";
+import CoursePlayer from "./pages/CoursePlayer";
 import StudentDashboard from "./pages/StudentDashboard";
 import InstructorDashboard from "./pages/InstructorDashboard";
 import Login from "./pages/Login";
@@ -43,7 +44,7 @@ function InstructorProtectedRoute({ children }) {
 function StudentProtectedRoute({ children }) {
   const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
   if (!isLoggedIn) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/login" replace />;
   }
   return children;
 }
@@ -72,6 +73,9 @@ function App() {
           <Route path="/courses/:id" element={<CourseDetail />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+
+          {/* Video Player */}
+          <Route path="/player/:id" element={<StudentProtectedRoute><CoursePlayer /></StudentProtectedRoute>} />
 
           {/* Student Only - My Learning */}
           <Route path="/student" element={<StudentProtectedRoute><StudentDashboard /></StudentProtectedRoute>} />
