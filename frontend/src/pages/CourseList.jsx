@@ -17,7 +17,7 @@ export default function CourseList() {
                                 <h6 className="mt-2 fw-bold">{c.title}</h6>
                                 <small style={{color: "var(--muted)"}}>By {c.instructor}</small>
                                 <div className="d-flex justify-content-between align-items-center mt-3">
-                                    <b>₹{c.price}</b>
+                                    <b>{c.price}</b>
                                     <Link to={`/courses/${c.id}`} className="btn btn-primary btn-sm">View</Link>
                                 </div>
                             </div>
