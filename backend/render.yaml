@@ -1,9 +1,0 @@
-services:
-  - type: web
-    name: learnup-backend
-    env: docker
-    rootDir: backend
-    plan: free
-    envVars:
-      - key: PORT
-        value: 8080

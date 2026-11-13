@@ -6,7 +6,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/enrollments")
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "http://localhost:5173")
 public class EnrollmentController {
     private final EnrollmentRepository repo;
     public EnrollmentController(EnrollmentRepository repo){this.repo=repo;}
