@@ -6,7 +6,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/follows")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "*")
 public class FollowController {
     private final FollowRepository repo;
     public FollowController(FollowRepository repo){this.repo=repo;}

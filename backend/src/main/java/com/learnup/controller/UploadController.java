@@ -8,7 +8,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/upload")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "*")
 public class UploadController {
 
     @PostMapping
