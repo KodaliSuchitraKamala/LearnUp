@@ -15,6 +15,19 @@ public class Course {
     private String image;
     private String description;
 
+    @Column(length = 2000)
+    private String videos; // JSON string: [{"title":"Intro","url":"https://..."}]
+    private String duration;
+
+    // NEW: Live Meet - per course
+    private String meetLink;
+    private String liveClassTitle;
+    private String liveClassAt;
+
+    // NEW: Documents / PDFs - per course - JSON: [{"title":"Notes","url":"https://..."}]
+    @Column(length = 2000)
+    private String documents;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getTitle() { return title; }
@@ -28,14 +41,19 @@ public class Course {
     public String getImage() { return image; }
     public void setImage(String image) { this.image = image; }
     public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; } 
-
-    @Column(length = 2000)
-    private String videos; // JSON string: ["Intro","Basics",...]
-    private String duration;
-
+    public void setDescription(String description) { this.description = description; }
     public String getVideos() { return videos; }
     public void setVideos(String videos) { this.videos = videos; }
     public String getDuration() { return duration; }
     public void setDuration(String duration) { this.duration = duration; }
+
+    public String getMeetLink() { return meetLink; }
+    public void setMeetLink(String meetLink) { this.meetLink = meetLink; }
+    public String getLiveClassTitle() { return liveClassTitle; }
+    public void setLiveClassTitle(String liveClassTitle) { this.liveClassTitle = liveClassTitle; }
+    public String getLiveClassAt() { return liveClassAt; }
+    public void setLiveClassAt(String liveClassAt) { this.liveClassAt = liveClassAt; }
+
+    public String getDocuments() { return documents; }
+    public void setDocuments(String documents) { this.documents = documents; }
 }

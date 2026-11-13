@@ -9,155 +9,102 @@ export default function InstructorDashboard() {
     const [backendEnrollments, setBackendEnrollments] = useState([]);
     const [backendFollowers, setBackendFollowers] = useState([]);
     const [form, setForm] = useState({ title: "", category: "Development", price: "", description: "", image: "https://images.unsplash.com/photo-1516321318423-...?w=400" });
+    const [manageId, setManageId] = useState(null);
+    const [manageTab, setManageTab] = useState("videos");
+    const [editForm, setEditForm] = useState({ title: "", category: "", price: "", description: "", image: "" });
+    const [videoList, setVideoList] = useState([{ title: "", url: "", fileName: "" }]);
+    const [docList, setDocList] = useState([{ title: "", url: "", fileName: "" }]);
+    const [meetForm, setMeetForm] = useState({ meetLink: "", liveClassTitle: "", liveClassAt: "" });
+    const [uploading, setUploading] = useState("");
     const user = JSON.parse(localStorage.getItem("user") || "{}");
 
     const refreshData = useCallback(async () => {
-        try {
-            setEnrolledAll(JSON.parse(localStorage.getItem("enrolledCourses") || "[]"));
-            setAllEnrollments(JSON.parse(localStorage.getItem("allEnrollments") || "[]"));
-            setFollowers(JSON.parse(localStorage.getItem("followers") || "[]"));
-        } catch {}
-        // BACKEND - real source, works across browsers/users
-        try {
-            const eFetched = await fetch("/api/enrollments");
-            const eData = await eFetched.json();
-            if (Array.isArray(eData)) setBackendEnrollments(eData);
-        } catch {}
-        try {
-            const fFetched = await fetch("/api/follows");
-            const fData = await fFetched.json();
-            if (Array.isArray(fData)) setBackendFollowers(fData);
-        } catch {}
+        try { setEnrolledAll(JSON.parse(localStorage.getItem("enrolledCourses") || "[]")); setAllEnrollments(JSON.parse(localStorage.getItem("allEnrollments") || "[]")); setFollowers(JSON.parse(localStorage.getItem("followers") || "[]")); } catch {}
+        try { const e = await fetch("/api/enrollments"); const d = await e.json(); if (Array.isArray(d)) setBackendEnrollments(d); } catch {}
+        try { const f = await fetch("/api/follows"); const d = await f.json(); if (Array.isArray(d)) setBackendFollowers(d); } catch {}
     }, []);
 
-    useEffect(() => {
-        async function load() {
-            try {
-                const fetched = await fetch("/api/courses");
-                const data = await fetched.json();
-                if (Array.isArray(data) && data.length > 0) {
-                    const local = JSON.parse(localStorage.getItem("customCourses") || "[]");
-                    const merged = [...data, ...local.filter(l => !data.some(d => String(d.id) === String(l.id)))];
-                    setCourses(merged);
-                }
-            } catch {}
-        }
-        load();
-    }, []);
+    useEffect(() => { async function load() { try { const fetched = await fetch("/api/courses"); const data = await fetched.json(); if (Array.isArray(data) && data.length > 0) { const local = JSON.parse(localStorage.getItem("customCourses") || "[]"); setCourses([...data, ...local.filter(l => !data.some(d => String(d.id) === String(l.id)))]); } } catch {} } load(); }, []);
+    useEffect(() => { refreshData(); window.addEventListener("focus", refreshData); window.addEventListener("storage", refreshData); window.addEventListener("enrollmentUpdated", refreshData); window.addEventListener("followUpdated", refreshData); const timer = setInterval(refreshData, 2000); return () => { window.removeEventListener("focus", refreshData); window.removeEventListener("storage", refreshData); window.removeEventListener("enrollmentUpdated", refreshData); window.removeEventListener("followUpdated", refreshData); clearInterval(timer); }; }, [refreshData]);
 
-    useEffect(() => {
-        refreshData();
-        window.addEventListener("focus", refreshData);
-        window.addEventListener("storage", refreshData);
-        window.addEventListener("enrollmentUpdated", refreshData);
-        window.addEventListener("followUpdated", refreshData);
-        const timer = setInterval(refreshData, 2000);
-        return () => { window.removeEventListener("focus", refreshData); window.removeEventListener("storage", refreshData); window.removeEventListener("enrollmentUpdated", refreshData); window.removeEventListener("followUpdated", refreshData); clearInterval(timer); };
-    }, [refreshData]);
-
-    const myCourses = courses;
-    const myCourseIds = new Set(myCourses.map(c => String(c.id)));
-    const myInstructorNames = new Set(myCourses.map(c => c.instructor));
-
-    // UNIFIED: backend first, local as fallback - dedupe by courseId + studentEmail
-    const unified = [];
-    const seen = new Set();
-    const pushUnified = (courseId, title, price, studentName, studentEmail) => {
-        const id = String(courseId || "");
-        if (!id) return;
-        const key = `${id}-${studentEmail || studentName || "Student"}`;
-        if (seen.has(key)) return;
-        seen.add(key);
-        unified.push({ id, title, price: Number(price || 0), studentName, studentEmail });
-    };
+    const myCourses = courses; const myCourseIds = new Set(myCourses.map(c => String(c.id))); const myInstructorNames = new Set(myCourses.map(c => c.instructor));
+    const unified = []; const seen = new Set();
+    const pushUnified = (courseId, title, price, studentName, studentEmail) => { const id = String(courseId || ""); if (!id) return; const key = `${id}-${studentEmail || studentName}`; if (seen.has(key)) return; seen.add(key); unified.push({ id, title, price: Number(price || 0), studentName, studentEmail }); };
     backendEnrollments.forEach(e => pushUnified(e.courseId, e.courseTitle, e.price, e.studentName, e.studentEmail));
     allEnrollments.forEach(e => pushUnified(e.courseId || e.id, e.courseTitle || e.title, e.price, e.studentName, e.studentEmail));
     enrolledAll.forEach(e => pushUnified(e.id || e.courseId, e.title || e.courseTitle, e.price, e.studentName || user.name, e.studentEmail || ""));
-
-    // FIX: Filter by courseId in MY courses, NOT by instructor name (names are reversed)
     const myEnrolled = unified.filter(e => myCourseIds.has(String(e.id)) || myCourses.some(c => c.title === e.title));
-    const totalStudents = myEnrolled.length;
-    const totalEarnings = myEnrolled.reduce((sum, c) => sum + (Number(c.price) || 0), 0);
+    const totalStudents = myEnrolled.length; const totalEarnings = myEnrolled.reduce((s, c) => s + (Number(c.price) || 0), 0);
     const getStudentsForCourse = (course) => unified.filter(e => String(e.id) === String(course.id) || e.title === course.title).length;
-
-    // FOLLOWERS: backend follows where instructor is one of MY course instructors OR my name
     const backendMyFollowers = backendFollowers.filter(f => myInstructorNames.has(f.instructorName) || f.instructorName === user.name);
     const totalFollowers = backendMyFollowers.length > 0 ? backendMyFollowers.length : followers.length;
     const displayFollowers = backendMyFollowers.length > 0 ? backendMyFollowers : followers;
+    const parseJson = (val, fallback = []) => { if (!val) return fallback; if (Array.isArray(val)) return val; try { const p = JSON.parse(val); return Array.isArray(p) ? p : fallback; } catch { return val.split(",").map(v => ({ title: v.trim(), url: "", fileName: "" })); } };
 
-    const handleAddCourse = async (e) => {
-        e.preventDefault();
-        if (!form.title || !form.price) { alert("Enter Title and Price"); return; }
-        const newCourse = { title: form.title, category: form.category, price: Number(form.price), description: form.description, image: form.image, instructor: user.name || "Instructor", duration: "4h 30m", videos: JSON.stringify(["Introduction", "Chapter 1 - Basics", "Chapter 2 - Advanced", "Final Project"]) };
+    const handleAddCourse = async (e) => { e.preventDefault(); if (!form.title || !form.price) { alert("Enter Title and Price"); return; } const newCourse = { title: form.title, category: form.category, price: Number(form.price), description: form.description, image: form.image, instructor: user.name || "Instructor", duration: "4h 30m", videos: JSON.stringify([{ title: "Introduction", url: "", fileName: "" }]), documents: JSON.stringify([]), meetLink: "", liveClassTitle: "", liveClassAt: "" }; try { const fetched = await fetch("/api/courses", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(newCourse) }); if (fetched.ok) { const saved = await fetched.json(); const updated = [...courses, saved]; setCourses(updated); localStorage.setItem("customCourses", JSON.stringify(updated)); alert("✅ Course Published! Now click Manage → Upload Videos / Docs from Laptop."); } else throw new Error(); } catch { const localCourse = { ...newCourse, id: Date.now(), videos: JSON.parse(newCourse.videos), documents: [] }; const updated = [...courses, localCourse]; setCourses(updated); localStorage.setItem("customCourses", JSON.stringify(updated)); alert("✅ Course Published (Locally)!"); } setForm({ title: "", category: "Development", price: "", description: "", image: "https://images.unsplash.com/photo-1516321318423-...?w=400" }); };
+    const deleteCourse = async (id) => { if (!window.confirm("Delete this course?")) return; try { await fetch(`/api/courses/${id}`, { method: "DELETE" }); } catch {} const updated = courses.filter(c => String(c.id) !== String(id)); localStorage.setItem("customCourses", JSON.stringify(updated)); setCourses(updated); if (String(manageId) === String(id)) setManageId(null); };
+
+    const openManage = (course, tab = "videos") => { if (String(manageId) === String(course.id) && manageTab === tab) { setManageId(null); return; } setManageId(course.id); setManageTab(tab); setEditForm({ title: course.title || "", category: course.category || "", price: course.price || "", description: course.description || "", image: course.image || "" }); const vids = parseJson(course.videos, [{ title: "Introduction", url: "" }]); setVideoList(vids.length ? vids.map(v => typeof v === "string" ? { title: v, url: "", fileName: "" } : { title: v.title || "", url: v.url || v.videoUrl || "", fileName: v.fileName || "" }) : [{ title: "", url: "", fileName: "" }]); const docs = parseJson(course.documents, []); setDocList(docs.length ? docs.map(d => typeof d === "string" ? { title: d, url: "", fileName: "" } : { title: d.title || "", url: d.url || "", fileName: d.fileName || "" }) : [{ title: "", url: "", fileName: "" }]); setMeetForm({ meetLink: course.meetLink || "", liveClassTitle: course.liveClassTitle || "", liveClassAt: course.liveClassAt || "" }); };
+    const saveCourseUpdate = async (course, patch, msg) => { const updatedCourse = { ...course, ...patch }; try { await fetch(`/api/courses/${course.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(updatedCourse) }); } catch {} const updated = courses.map(c => String(c.id) === String(course.id) ? updatedCourse : c); setCourses(updated); localStorage.setItem("customCourses", JSON.stringify(updated)); alert(msg); };
+    const saveVideos = (course) => saveCourseUpdate(course, { videos: JSON.stringify(videoList.filter(v => v.title || v.url)) }, "🎥 Videos Saved for " + course.title);
+    const saveDocs = (course) => saveCourseUpdate(course, { documents: JSON.stringify(docList.filter(d => d.title || d.url)) }, "📄 Documents Saved for " + course.title);
+    const saveEdit = (course) => saveCourseUpdate(course, { title: editForm.title, category: editForm.category, price: Number(editForm.price), description: editForm.description, image: editForm.image }, "✏️ Course Updated!");
+    const saveMeet = (course) => saveCourseUpdate(course, { meetLink: meetForm.meetLink, liveClassTitle: meetForm.liveClassTitle, liveClassAt: meetForm.liveClassAt }, "🔴 Live Meet Saved!");
+
+    // NEW: Upload from Laptop - no size limit, keeps original name
+    const handleFileUpload = async (e, type, idx) => {
+        const file = e.target.files[0]; if (!file) return;
+        setUploading(`Uploading ${file.name}... Please wait, no size limit`);
+        const fd = new FormData(); fd.append("file", file);
         try {
-            const fetched = await fetch("/api/courses", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(newCourse) });
-            if (fetched.ok) {
-                const saved = await fetched.json();
-                const updated = [...courses, saved];
-                setCourses(updated);
-                localStorage.setItem("customCourses", JSON.stringify(updated));
-                alert("Course Added & Saved to MySQL!");
-            } else throw new Error("backend failed");
-        } catch {
-            const localCourse = { ...newCourse, id: Date.now(), videos: ["Introduction", "Chapter 1 - Basics", "Chapter 2 - Advanced", "Final Project"] };
-            const updated = [...courses, localCourse];
-            setCourses(updated);
-            localStorage.setItem("customCourses", JSON.stringify(updated));
-            alert("Course Added Successfully! (Saved Locally)");
-        }
-        setForm({ title: "", category: "Development", price: "", description: "", image: "https://images.unsplash.com/photo-1516321318423-...?w=400" });
-    };
-
-    const deleteCourse = async (id) => {
-        if (!window.confirm("Delete this course?")) return;
-        try { await fetch(`/api/courses/${id}`, { method: "DELETE" }); } catch {}
-        const updated = courses.filter(c => String(c.id) !== String(id));
-        localStorage.setItem("customCourses", JSON.stringify(updated));
-        setCourses(updated);
+            const res = await fetch("/api/upload", { method: "POST", body: fd });
+            const data = await res.json();
+            const fullUrl = `http://localhost:8080${data.url}`;
+            if (type === "video") { const n = [...videoList]; n[idx] = { title: n[idx].title || file.name.replace(/\.[^/.]+$/, ""), url: fullUrl, fileName: data.fileName }; setVideoList(n); }
+            else { const n = [...docList]; n[idx] = { title: n[idx].title || file.name.replace(/\.[^/.]+$/, ""), url: fullUrl, fileName: data.fileName }; setDocList(n); }
+            alert(`✅ Uploaded: ${data.fileName}`);
+        } catch { alert("Upload failed. Is backend running? Check backend terminal."); }
+        setUploading(""); e.target.value = "";
     };
 
     return (
         <div className="container mt-4 pb-5">
             <h2 className="fw-bold" style={{ color: "var(--text)" }}>Instructor Dashboard</h2>
             <p style={{ color: "var(--muted)" }}>Welcome back, {user.name} 👋🏻 | Manage your courses and students</p>
-            <div className="row g-3 mt-2">
-                {[
-                    { label: "My Courses", val: myCourses.length, sub: "📚 Total Created", color: "text-primary" },
-                    { label: "Total Students", val: totalStudents, sub: "🧑🏻‍🎓 Enrolled", color: "text-success" },
-                    { label: "Followers", val: totalFollowers, sub: "❤️ Followers", color: "text-warning" },
-                    { label: "Earnings", val: `₹${totalEarnings}`, sub: "💰 This month", color: "text-success" },
-                ].map(s => (
-                    <div key={s.label} className="col-6 col-md-3"><div className="card p-3 shadow-sm border-0" style={{ background: "var(--card-bg)" }}><h6 style={{ color: "var(--muted)" }}>{s.label}</h6><h2 className="fw-bold" style={{ color: "var(--text)" }}>{s.val}</h2><small className={s.color}>{s.sub}</small></div></div>
-                ))}
-            </div>
+            <div className="row g-3 mt-2">{[{ label: "My Courses", val: myCourses.length, sub: "📚 Total Created", color: "text-primary" }, { label: "Total Students", val: totalStudents, sub: "🧑🏻‍🎓 Enrolled", color: "text-success" }, { label: "Followers", val: totalFollowers, sub: "❤️ Followers", color: "text-warning" }, { label: "Earnings", val: `₹${totalEarnings}`, sub: "💰 This month", color: "text-success" }].map(s => (<div key={s.label} className="col-6 col-md-3"><div className="card p-3 shadow-sm border-0" style={{ background: "var(--card-bg)" }}><h6 style={{ color: "var(--muted)" }}>{s.label}</h6><h2 className="fw-bold" style={{ color: "var(--text)" }}>{s.val}</h2><small className={s.color}>{s.sub}</small></div></div>))}</div>
             <div className="row mt-4 g-3">
                 <div className="col-12 col-md-5">
                     <div className="card p-4 shadow-sm" style={{ background: "var(--card-bg)", borderColor: "var(--border)" }}>
-                        <h4 style={{ color: "var(--text)" }}>➕ Add New Course</h4>
-                        <form onSubmit={handleAddCourse} className="mt-3">
-                            <label className="small fw-bold" style={{ color: "var(--text)" }}>Course Title *</label>
-                            <input className="form-control mb-3" placeholder="Ex: Complete React JS 2026" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} required />
-                            <div className="row"><div className="col-6"><label className="small fw-bold" style={{ color: "var(--text)" }}>Category</label><select className="form-select mb-3" value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}><option>Development</option><option>Design</option><option>Marketing</option><option>Business</option><option>Python</option></select></div><div className="col-6"><label className="small fw-bold" style={{ color: "var(--text)" }}>Price (₹)</label><input className="form-control mb-3" type="number" placeholder="Ex: 1499" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} required /></div></div>
-                            <label className="small fw-bold" style={{ color: "var(--text)" }}>Description</label><textarea className="form-control mb-3" rows="3" placeholder="What students will learn..." value={form.description} onChange={e => setForm({ ...form, description: e.target.value })}></textarea>
-                            <label className="small fw-bold" style={{ color: "var(--text)" }}>Thumbnail Image URL</label><input className="form-control mb-3" placeholder="https://..." value={form.image} onChange={e => setForm({ ...form, image: e.target.value })} />
-                            <button className="btn btn-primary w-100 fw-bold py-2">🚀 Publish Course</button>
-                        </form>
+                        <h4 style={{ color: "var(--text)" }}>➕ Add New Course</h4><p className="small text-muted">Just basic info. Add Videos / Docs / Live after publishing, in Manage.</p>
+                        <form onSubmit={handleAddCourse} className="mt-2"><label className="small fw-bold" style={{ color: "var(--text)" }}>Course Title *</label><input className="form-control mb-3" placeholder="Ex: Complete React JS 2026" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} required /><div className="row"><div className="col-6"><label className="small fw-bold" style={{ color: "var(--text)" }}>Category</label><select className="form-select mb-3" value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}><option>Development</option><option>Design</option><option>Marketing</option><option>Business</option><option>Python</option></select></div><div className="col-6"><label className="small fw-bold" style={{ color: "var(--text)" }}>Price (₹)</label><input className="form-control mb-3" type="number" placeholder="Ex: 1499" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} required /></div></div><label className="small fw-bold" style={{ color: "var(--text)" }}>Description</label><textarea className="form-control mb-3" rows="3" placeholder="What students will learn..." value={form.description} onChange={e => setForm({ ...form, description: e.target.value })}></textarea><label className="small fw-bold" style={{ color: "var(--text)" }}>Thumbnail Image URL</label><input className="form-control mb-3" placeholder="https://..." value={form.image} onChange={e => setForm({ ...form, image: e.target.value })} /><button className="btn btn-primary w-100 fw-bold py-2">🚀 Publish Course</button></form>
                     </div>
-                    <div className="card p-3 mt-3" style={{ background: "var(--card-bg)" }}>
-                        <h6 style={{ color: "var(--text)" }}>👥 Recent Followers ({totalFollowers})</h6>
-                        {displayFollowers.length === 0 ? <p className="small" style={{ color: "var(--muted)" }}>No followers yet.</p> : displayFollowers.slice(0, 5).map((f, i) => (<div key={i} className="d-flex justify-content-between py-1"><span style={{ color: "var(--text)" }}>{typeof f === "string" ? f : f.studentName || f.name || f.instructor}</span><span className="badge bg-primary">Student</span></div>))}
-                    </div>
-                    <div className="card p-3 mt-3" style={{ background: "var(--card-bg)" }}>
-                        <h6 style={{ color: "var(--text)" }}>🧑🏻‍🎓 Recent Enrollments ({myEnrolled.length})</h6>
-                        {myEnrolled.length === 0 ? <p className="small" style={{ color: "var(--muted)" }}>No enrollments yet.</p> : myEnrolled.slice(0, 5).map((en, i) => (<div key={i} className="d-flex justify-content-between py-1"><span style={{ color: "var(--text)" }}>{en.studentName} - {en.title}</span><span className="badge bg-success">₹{en.price}</span></div>))}
-                    </div>
+                    <div className="card p-3 mt-3" style={{ background: "var(--card-bg)" }}><h6 style={{ color: "var(--text)" }}>👥 Recent Followers ({totalFollowers})</h6>{displayFollowers.length === 0 ? <p className="small" style={{ color: "var(--muted)" }}>No followers yet.</p> : displayFollowers.slice(0, 5).map((f, i) => (<div key={i} className="d-flex justify-content-between py-1"><span style={{ color: "var(--text)" }}>{typeof f === "string" ? f : f.studentName || f.name || f.instructor}</span><span className="badge bg-primary">Student</span></div>))}</div>
+                    <div className="card p-3 mt-3" style={{ background: "var(--card-bg)" }}><h6 style={{ color: "var(--text)" }}>🧑🏻‍🎓 Recent Enrollments ({myEnrolled.length})</h6>{myEnrolled.length === 0 ? <p className="small" style={{ color: "var(--muted)" }}>No enrollments yet.</p> : myEnrolled.slice(0, 5).map((en, i) => (<div key={i} className="d-flex justify-content-between py-1"><span style={{ color: "var(--text)" }}>{en.studentName} - {en.title}</span><span className="badge bg-success">₹{en.price}</span></div>))}</div>
                 </div>
                 <div className="col-12 col-md-7">
                     <div className="card p-4 shadow-sm" style={{ background: "var(--card-bg)", borderColor: "var(--border)" }}>
                         <div className="d-flex flex-wrap justify-content-between align-items-center gap-2"><h4 style={{ color: "var(--text)" }}>📚 My Published Courses ({myCourses.length})</h4><Link to="/courses" className="btn btn-sm btn-outline-primary">View as Student</Link></div>
-                        {myCourses.length === 0 ? (<div className="text-center py-5"><h1>📪</h1><p style={{ color: "var(--muted)" }}>No courses yet. Add your first course!</p></div>) : (<div className="mt-3">{myCourses.map(course => (<div key={course.id} className="card mb-3 p-2 d-flex flex-row align-items-center flex-wrap" style={{ background: "var(--bg)", borderColor: "var(--border)" }}><img src={course.image} style={{ width: "90px", height: "60px", objectFit: "cover", borderRadius: "10px" }} alt="" /><div className="ms-3 flex-grow-1" style={{ minWidth: "150px" }}><h6 className="mb-1" style={{ color: "var(--text)" }}>{course.title}</h6><small style={{ color: "var(--muted)" }}>{course.category} | ₹{course.price} | 🧑🏻‍🎓 {getStudentsForCourse(course)} students</small></div><div className="d-flex flex-row flex-md-column gap-1 mt-2 mt-md-0"><Link to={`/courses/${course.id}`} className="btn btn-sm btn-outline-primary">View</Link><button onClick={() => deleteCourse(course.id)} className="btn btn-sm btn-outline-danger">Delete</button></div></div>))}</div>)}
+                        {uploading && <div className="alert alert-warning mt-2 mb-0 py-2">{uploading}</div>}
+                        {myCourses.length === 0 ? (<div className="text-center py-5"><h1>📪</h1><p style={{ color: "var(--muted)" }}>No courses yet. Add your first course!</p></div>) : (<div className="mt-3">{myCourses.map(course => { const vids = parseJson(course.videos, []); const docs = parseJson(course.documents, []); const isManaging = String(manageId) === String(course.id); return (
+                            <div key={course.id} className="card mb-3 p-3" style={{ background: "var(--bg)", borderColor: "var(--border)" }}>
+                                <div className="d-flex flex-row align-items-center flex-wrap"><img src={course.image} style={{ width: "90px", height: "60px", objectFit: "cover", borderRadius: "10px" }} alt="" /><div className="ms-3 flex-grow-1" style={{ minWidth: "150px" }}><h6 className="mb-1" style={{ color: "var(--text)" }}>{course.title}</h6><small style={{ color: "var(--muted)" }}>{course.category} | ₹{course.price} | 🧑🏻‍🎓 {getStudentsForCourse(course)} students | 🎥 {vids.length} videos | 📄 {docs.length} docs {course.meetLink ? " | 🔴 Live" : ""}</small></div><div className="d-flex gap-1 mt-2 mt-md-0 flex-wrap"><Link to={`/courses/${course.id}`} className="btn btn-sm btn-outline-primary">View</Link><button onClick={() => openManage(course, "videos")} className="btn btn-sm btn-primary">⚙️ Manage</button><button onClick={() => deleteCourse(course.id)} className="btn btn-sm btn-outline-danger">Delete</button></div></div>
+                                {course.meetLink && <div className="mt-2 small"><span className="badge bg-danger">🔴 Live: {course.liveClassTitle || "Live Session"} {course.liveClassAt ? `• ${course.liveClassAt}` : ""}</span> <a href={course.meetLink} target="_blank" rel="noreferrer" className="small">Join Meet ↗</a></div>}
+                                {isManaging && (
+                                    <div className="mt-3 border-top pt-3">
+                                        <div className="d-flex gap-1 flex-wrap mb-3">{[["videos", "🎥 Upload Video"], ["edit", "✏️ Edit Course"], ["docs", "📄 Upload Document / PDF"], ["live", "🔴 Start Live Meet"]].map(([key, label]) => (<button key={key} onClick={() => setManageTab(key)} className={`btn btn-sm ${manageTab === key ? "btn-dark" : "btn-outline-secondary"}`}>{label}</button>))}<button onClick={() => setManageId(null)} className="btn btn-sm btn-outline-secondary ms-auto">✕ Close</button></div>
+                                        {manageTab === "videos" && (<div><h6 className="fw-bold">🎥 Upload Videos for <span className="text-primary">{course.title}</span></h6><small className="text-muted d-block mb-2">Choose video from your Laptop. Keeps original name. No size limit. Ex: React-Intro.mp4</small>
+                                            {videoList.map((v, idx) => (<div key={idx} className="card p-2 mb-2"><div className="row g-1"><div className="col-12 col-md-4"><input className="form-control form-control-sm" placeholder="Lesson Name - Ex: Introduction" value={v.title} onChange={e => { const n = [...videoList]; n[idx].title = e.target.value; setVideoList(n); }} /></div><div className="col-12 col-md-6"><label className="btn btn-sm btn-outline-primary w-100 mb-0" style={{ cursor: "pointer" }}>📂 {v.fileName ? `✅ ${v.fileName}` : "Choose Video from Laptop"}<input type="file" accept="video/*" hidden onChange={e => handleFileUpload(e, "video", idx)} /></label></div><div className="col-12 col-md-2"><button type="button" className="btn btn-sm btn-outline-danger w-100" onClick={() => setVideoList(videoList.filter((_, i) => i !== idx))}>✕</button></div></div>{v.url && <small className="text-success d-block mt-1">🔗 Uploaded: {v.fileName} • <a href={v.url} target="_blank" rel="noreferrer">Preview ↗</a></small>}</div>))}
+                                            <div className="d-flex gap-2"><button className="btn btn-sm btn-outline-primary" onClick={() => setVideoList([...videoList, { title: "", url: "", fileName: "" }])}>+ Add Lesson</button><button className="btn btn-sm btn-success fw-bold" onClick={() => saveVideos(course)}>💾 Save Videos</button></div><small className="text-muted d-block mt-1">OR paste YouTube link in Lesson Name? No - Use file upload for laptop videos, YouTube links also work if you paste URL in Title field below.</small></div>)}
+                                        {manageTab === "edit" && (<div><h6 className="fw-bold">✏️ Edit - {course.title}</h6><input className="form-control mb-2" placeholder="Title" value={editForm.title} onChange={e => setEditForm({ ...editForm, title: e.target.value })} /><div className="row"><div className="col-6"><select className="form-select mb-2" value={editForm.category} onChange={e => setEditForm({ ...editForm, category: e.target.value })}><option>Development</option><option>Design</option><option>Marketing</option><option>Business</option><option>Python</option></select></div><div className="col-6"><input className="form-control mb-2" type="number" placeholder="Price" value={editForm.price} onChange={e => setEditForm({ ...editForm, price: e.target.value })} /></div></div><textarea className="form-control mb-2" rows="2" placeholder="Description" value={editForm.description} onChange={e => setEditForm({ ...editForm, description: e.target.value })}></textarea><input className="form-control mb-2" placeholder="Image URL" value={editForm.image} onChange={e => setEditForm({ ...editForm, image: e.target.value })} /><button className="btn btn-sm btn-success fw-bold" onClick={() => saveEdit(course)}>💾 Save Changes</button></div>)}
+                                        {manageTab === "docs" && (<div><h6 className="fw-bold">📄 Upload Documents / PDFs for {course.title}</h6><small className="text-muted d-block mb-2">Choose PDF / PPT / Notes from Laptop. Keeps original name. No size limit.</small>
+                                            {docList.map((d, idx) => (<div key={idx} className="card p-2 mb-2"><div className="row g-1"><div className="col-12 col-md-4"><input className="form-control form-control-sm" placeholder="Doc Name - Ex: Week 1 Notes" value={d.title} onChange={e => { const n = [...docList]; n[idx].title = e.target.value; setDocList(n); }} /></div><div className="col-12 col-md-6"><label className="btn btn-sm btn-outline-success w-100 mb-0" style={{ cursor: "pointer" }}>📂 {d.fileName ? `✅ ${d.fileName}` : "Choose PDF / Doc from Laptop"}<input type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.zip" hidden onChange={e => handleFileUpload(e, "doc", idx)} /></label></div><div className="col-12 col-md-2"><button type="button" className="btn btn-sm btn-outline-danger w-100" onClick={() => setDocList(docList.filter((_, i) => i !== idx))}>✕</button></div></div>{d.url && <small className="text-success d-block mt-1">🔗 Uploaded: {d.fileName} • <a href={d.url} target="_blank" rel="noreferrer">Download ↗</a></small>}</div>))}
+                                            <div className="d-flex gap-2"><button className="btn btn-sm btn-outline-primary" onClick={() => setDocList([...docList, { title: "", url: "", fileName: "" }])}>+ Add Document</button><button className="btn btn-sm btn-success fw-bold" onClick={() => saveDocs(course)}>💾 Save Documents</button></div></div>)}
+                                        {manageTab === "live" && (<div style={{ background: "#fff5f5" }} className="p-3 rounded border"><h6 className="fw-bold">🔴 Start Live Meet - {course.title}</h6><small className="text-muted d-block mb-2">1. Go to meet.google.com → New Meeting → Copy link<br />2. Paste here → Save → Students see Join button.</small><label className="small fw-bold">Google Meet Link</label><input className="form-control mb-2" placeholder="https://meet.google.com/abc-def-ghi" value={meetForm.meetLink} onChange={e => setMeetForm({ ...meetForm, meetLink: e.target.value })} /><div className="row"><div className="col-6"><label className="small fw-bold">Live Class Title</label><input className="form-control mb-2" placeholder="Ex: Doubt Session" value={meetForm.liveClassTitle} onChange={e => setMeetForm({ ...meetForm, liveClassTitle: e.target.value })} /></div><div className="col-6"><label className="small fw-bold">Date & Time</label><input type="datetime-local" className="form-control mb-2" value={meetForm.liveClassAt} onChange={e => setMeetForm({ ...meetForm, liveClassAt: e.target.value })} /></div></div><div className="d-flex gap-2 flex-wrap"><button className="btn btn-sm btn-danger fw-bold" onClick={() => saveMeet(course)}>💾 Save Live Meet</button>{meetForm.meetLink && <a href={meetForm.meetLink} target="_blank" rel="noreferrer" className="btn btn-sm btn-outline-danger">📹 Test Join Meet ↗</a>}</div></div>)}
+                                    </div>
+                                )}
+                            </div>); })}</div>)}
                     </div>
-                    <div className="alert alert-info mt-3"><b>🔗 Interlinked System:</b> When a student clicks Enroll / Follow, their name appears here (from MySQL).</div>
+                    <div className="alert alert-info mt-3"><b>🔗 How it works:</b> Add Course (Left) → Manage (Right) → Upload Video / Doc from Laptop → Save → Student sees it with same file name.</div>
                 </div>
             </div>
         </div>
