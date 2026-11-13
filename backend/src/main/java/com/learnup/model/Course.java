@@ -29,4 +29,13 @@ public class Course {
     public void setImage(String image) { this.image = image; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; } 
+
+    @Column(length = 2000)
+    private String videos; // JSON string: ["Intro","Basics",...]
+    private String duration;
+
+    public String getVideos() { return videos; }
+    public void setVideos(String videos) { this.videos = videos; }
+    public String getDuration() { return duration; }
+    public void setDuration(String duration) { this.duration = duration; }
 }

@@ -7,13 +7,37 @@ export default function CourseDetail() {
     const navigate = useNavigate();
     const [isEnrolled, setIsEnrolled] = useState(false);
     const [completed, setCompleted] = useState([]);
-
-    // All courses: static + instructor added
-    const customCourses = JSON.parse(localStorage.getItem("customCourses") || "[]");
-    const allCourses = [...staticCourses, ...customCourses];
-    const course = allCourses.find(c => String(c.id) === String(id));
+    const [course, setCourse] = useState(null);
+    const [loading, setLoading] = useState(true);
 
     const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+    // Fetch from Backend + localStorage + statice - same as CourseList
+    useEffect(() => {
+        let isMounted = true; 
+        // Always fetch backend - this is where Completed React lives
+        fetch(`/api/courses`)
+            .then(res => res.json())
+            .then(data => {
+                if (!isMounted) return;
+                const custom = JSON.parse(localStorage.getItem("customCourses") || "[]");
+                const backend = Array.isArray(data) ? data : [];
+                const merged = [...staticCourses, ...custom, ...backend];
+                const deduped = [...new Map(merged.map(c => [String(c.id), c])).values()];
+                const found = deduped.find(c => String(c.id) === String(id));
+                if (found) setCourse(found);
+                else setCourse(null);
+                setLoading(false);
+            })
+            .catch(() => {
+                if (!isMounted) return;
+                const custom = JSON.parse(localStorage.getItem("customCourses") || "[]");
+                const found = [...staticCourses, ...custom].find(c => String(c.id) === String(id));
+                if (found) setCourse(found);
+                setLoading(false)
+            });
+        return () => { isMounted = false; };
+    }, [id]);
 
     useEffect(() => {
         const enrolled = JSON.parse(localStorage.getItem("enrolledCourses") || "[]");
@@ -21,6 +45,15 @@ export default function CourseDetail() {
         setIsEnrolled(isExist);
         setCompleted(JSON.parse(localStorage.getItem(`progress_${id}`) || "[]"));
     }, [id]);
+
+    if (loading && !course) {
+        return (
+            <div className="container mt-5 text-center">
+                <div className="spinner-border text-primary" role="status"></div>
+                <p className="mt-2 text-muted">Loading course...</p>
+            </div>
+        );
+    }
 
     if (!course) {
         return (
@@ -31,16 +64,37 @@ export default function CourseDetail() {
         );
     }
 
-    const videos = course.videos || ["Introduction", "Core Concepts", "Practical", "Project"];
-
-    const handleEnroll = () => {
-        const enrolled = JSON.parse(localStorage.getItem("enrolledCourses") || "[]");
-        if (!enrolled.find(e => String(e.id || e) === String(course.id))) {
-            enrolled.push(course);
-            localStorage.setItem("enrolledCourses", JSON.stringify(enrolled));
-            setIsEnrolled(true);
-            navigate("/student");
+    // Backend may send videos as string, handle both
+    let videos = course.videos;
+    if (typeof videos === "string") {
+        try {
+            videos = JSON.parse(videos);
+        } catch {
+            videos = videos.split(",");
         }
+    }
+    if (!Array.isArray(videos) || videos.length === 0) {
+        videos = ["Introduction", "Core Concepts", "Pratical", "Project"];
+    }
+
+    const handleEnroll = async () => {
+        const enrolled = JSON.parse(localStorage.getItem("enrolledCourses") || "[]");
+        if (enrolled.find(e => String(e.id || e) === String(course.id))) return;
+        enrolled.push(course);
+        localStorage.setItem("enrolledCourses", JSON.stringify(enrolled));
+
+        // 1. Save to BACKEND - so ANY instructor browser can see it
+        try {
+            await fetch("/api/enrollments", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ courseId: Number(course.id), courseTitle: course.title, price: Number(course.price) || 0, studentName: user.name || "Student", studentEmail: user.email || "", instructorName: course.instructor || "" }) });
+        } catch {}
+
+        // 2. Keep localStorage as backup
+        const all = JSON.parse(localStorage.getItem("allEnrollments") || "[]");
+        all.push({ courseId: String(course.id), courseTitle: course.title, price: Number(course.price) || 0, studentName: user.name || "Student", studentEmail: user.email || "", instructorName: course.instructor || "" });
+        localStorage.setItem("allEnrollments", JSON.stringify(all));
+        window.dispatchEvent(new Event("enrollmentUpdated"));
+        setIsEnrolled(true);
+        navigate("/student");
     };
 
     const toggleVideo = (idx) => {
@@ -126,7 +180,7 @@ export default function CourseDetail() {
         ctx.fillStyle = "#fde68a";
         ctx.fill();
         ctx.lineWidth = 3;
-        ctx.strokeStyleStyle = "#78350f";
+        ctx.strokeStyle = "#78350f";
         ctx.stroke();
         ctx.fillStyle = "#78350f";
         ctx.font = "bold 14px sans-serif";
@@ -177,7 +231,7 @@ export default function CourseDetail() {
 
     return (
         <div className="container mt-4 pb-5">
-            <Link to="/courses" className="btn btn-outline-secondary btn-sm mb-3">← Back to Course</Link>
+            <Link to="/courses" className="btn btn-outline-secondary btn-sm mb-3">← Back to Courses</Link>                
             <div className="row">
                 <div className="col-md-8">
                     <img src={course.image} style={{width: "100%", height: "300px", objectFit: "cover", borderRadius: "16px"}} alt="" />
@@ -215,7 +269,7 @@ export default function CourseDetail() {
                 </div>
                 <div className="col-md-4">
                     <div className="card p-4 shadow-sm">
-                        <h3>{course.price}</h3>
+                        <h3>₹{course.price}</h3>
                         {!isEnrolled ? (
                             <button onClick={handleEnroll} className="btn btn-primary w-100 fw-bold">Enroll Now</button>
                         ) : (
@@ -225,7 +279,7 @@ export default function CourseDetail() {
                         <ul className="small">
                             <li>📹 {videos.length} videos</li>
                             <li>🏆 Certificate</li>
-                            <li>♾️ Lifetime Access</li>
+                            <li>♾️ Lifetime Acces</li>
                             <li>▶️ Full HD Videos</li>
                         </ul>
                     </div>

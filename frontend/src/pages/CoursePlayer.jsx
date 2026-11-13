@@ -6,14 +6,31 @@ export default function CoursePlayer() {
     const { id } = useParams();
     const customCourses = JSON.parse(localStorage.getItem("customCourses") || "[]");
     const allCourses = [...staticCourses, ...customCourses];
-    const course = allCourses.find(c => String(c.id) === String(id));
 
     const [completed, setCompleted] = useState([]);
     const [currentVideo, setCurrentVideo] = useState(0);
     const [showVideo, setShowVideo] = useState(false);
 
+    const [course, setCourse] = useState(null);
     useEffect(() => {
-        setCompleted(JSON.parse(localStorage.getItem(`progress_${id}`) || "[]"));
+        async function load() {
+            try {
+                const fetched = await fetch("/api/courses");
+                const data = await fetched.json();
+                const custom = JSON.parse(localStorage.getItem("customCourses") || "[]");
+                const merged = [...staticCourses, ...custom, ...(Array.isArray(data) ? data : [])];
+                const deduped = [...new Map(merged.map(c => [String(c.id), c])).values()];
+                const found = deduped.find(c => String(c.id) === String(id));
+                if (found) {
+                    if (typeof found.videos === "string") { try { found.videos = JSON.parse(found.videos); } catch { found.videos = found.videos.split(","); } }
+                    setCourse(found);
+                }
+            } catch {
+                const custom = JSON.parse(localStorage.getItem("customCourses") || "[]");
+                setCourse([...staticCourses, ...custom].find(c => String(c.id) === String(id)));
+            }
+        }
+        load();
     }, [id]);
 
     if (!course) {
@@ -83,7 +100,7 @@ export default function CoursePlayer() {
                 </div>
 
                 {/* Right - Playlist - Now uses theme */}
-                <div className="col-md-4 border-start" style={{background: "var(--card)", color: "var(--text)"}}>
+                <div className="col-md-4 border-start" style={{background: "var(--card-bg)", color: "var(--text)"}}>
                     <div className="p-3 border-bottom">
                         <h6>{course.title}</h6>
                         <div className="progress" style={{height: "8px"}}>

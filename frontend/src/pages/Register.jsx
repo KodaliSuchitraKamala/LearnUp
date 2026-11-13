@@ -17,7 +17,7 @@ export default function Register() {
         }
         const newUser = { ...form, id: Date.now() };
         allUsers.push(newUser);
-        localStorage.setItem("allUsers", JSON. stringify(allUsers));
+        localStorage.setItem("allUsers", JSON.stringify(allUsers));
 
         // Set current logged in user
         localStorage.setItem("user", JSON.stringify(newUser));
