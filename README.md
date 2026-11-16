@@ -168,7 +168,7 @@ Student marks all videos Complete -> Progress = 100%
 
 ## 👩‍💻 AuthorKodali Suchitra Kamala
 ExcelR Full Stack Development - Project: LearnUp LMS - Nov 2026
-GitHub: [[Add your GitHub link](https://github.com/KodaliSuchitraKamala/LearnUp)]
+GitHub: [[https://github.com/KodaliSuchitraKamala/LearnUp](https://github.com/KodaliSuchitraKamala/LearnUp)]
 
 ## 📄 License
 This project is for educational purposes - Excelr Full Stack Project.
