@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { courses as staticCourses } from "../data/courses";
 
 export default function CourseList() {
-    const [all, setAll] = useState(staticCourses);
+    const [all, setAll] = useState([]);
     const [search, setSearch] = useState("");
     const [filter, setFilter] = useState("All");
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         async function load() {
@@ -14,11 +14,13 @@ export default function CourseList() {
                 const data = await fetched.json();
                 const custom = JSON.parse(localStorage.getItem("customCourses") || "[]");
                 const backend = Array.isArray(data) ? data : [];
-                const merged = [...staticCourses, ...custom, ...backend];
+                const merged = [...backend, ...custom];
                 setAll([...new Map(merged.map(c => [String(c.id), c])).values()]);
             } catch {
                 const custom = JSON.parse(localStorage.getItem("customCourses") || "[]");
-                setAll([...new Map([...staticCourses, ...custom].map(c => [String(c.id), c])).values()]);
+                setAll([...new Map(custom.map(c => [String(c.id), c])).values()]);
+            } finally {
+                setLoading(false);
             }
         }
         load();
@@ -30,6 +32,8 @@ export default function CourseList() {
         return matchesSearch && matchesFilter;
     });
 
+    if (loading) return <div className="container mt-5 text-center"><div className="spinner-border text-primary"></div><p className="mt-2 text-muted">Loading courses...</p></div>;
+
     return (
         <div className="container mt-4 pb-5">
             <h3 className="fw-bold">✨ All Courses</h3>
@@ -39,7 +43,7 @@ export default function CourseList() {
             </div>
             <p className="text-muted mt-2 small">{filtered.length} courses found {search && `for "${search}"`}</p>
             <div className="row mt-3">
-                {filtered.length === 0 ? <div className="text-center py-5"><h1>🔍</h1><p>No courses found for "{search}"</p><button className="btn btn-outline-primary" onClick={()=>setSearch("")}>Clear Search</button></div> :
+                {filtered.length === 0 ? <div className="text-center py-5"><h1>📚</h1><p>No courses yet. Instructor needs to create a course.</p><Link to="/instructor" className="btn btn-primary">Go to Instructor Dashboard</Link></div> :
                 filtered.map(c => (
                     <div className="col-12 col-sm-6 col-md-4 mb-4" key={c.id}>
                         <div className="card h-100 shadow-sm">

@@ -1,6 +1,5 @@
 import { useParams, Link } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { courses as staticCourses } from "../data/courses";
 
 export default function CoursePlayer() {
     const { id } = useParams();
@@ -13,11 +12,11 @@ export default function CoursePlayer() {
             try {
                 const fetched = await fetch("/api/courses"); const data = await fetched.json();
                 const custom = JSON.parse(localStorage.getItem("customCourses") || "[]");
-                const merged = [...staticCourses, ...custom, ...(Array.isArray(data) ? data : [])];
+                const merged = [...(Array.isArray(data) ? data : []), ...custom];
                 const deduped = [...new Map(merged.map(c => [String(c.id), c])).values()];
                 const found = deduped.find(c => String(c.id) === String(id));
                 if (found) setCourse(normalize(found));
-            } catch { const custom = JSON.parse(localStorage.getItem("customCourses") || "[]"); const f = [...staticCourses, ...custom].find(c => String(c.id) === String(id)); if (f) setCourse(normalize(f)); }
+            } catch { const custom = JSON.parse(localStorage.getItem("customCourses") || "[]"); const f = custom.find(c => String(c.id) === String(id)); if (f) setCourse(normalize(f)); }
         }
         load();
     }, [id]);
