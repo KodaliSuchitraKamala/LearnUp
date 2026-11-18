@@ -38,7 +38,6 @@ export default function Navbar({ theme, toggleTheme }) {
                     </div>
                     <div className="d-flex align-items-center gap-2">
                         <button onClick={toggleTheme} className="btn btn-light btn-sm rounded-circle" style={{ width: "36px", height: "36px" }}>{dark ? "☀️" : "🌙"}</button>
-                        <span className="text-white d-none d-md-block small">{user.name ? `${user.name} (${user.role || localStorage.getItem("userRole") || "student"})` : "Guest"}</span>
                         <button onClick={handleLogout} className="btn btn-danger btn-sm d-none d-md-block">Logout</button>
                     </div>
                 </div>
